@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>threejs viewer</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+        .viewer-wrap {
+            min-height: 500px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="card text-center">
+            <div class="card-header">
+                <h4>threejs viewer</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-3">
+                        <div class="input-group mb-3">
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="fileInput" aria-describedby="fileInput">
+                                <label class="custom-file-label" for="fileInput">Choose file</label>
+                            </div>
+                        </div>
+                        <div class="list-group" id="modelList">
+                        </div>
+                    </div>
+                    <div class="col-9">
+                        <div class="card viewer-wrap">
+                            <div class="card-body" id="viewerContainer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://threejs.org/build/three.js"></script>
+    <script src="https://mamboleoo.be/learnThree/demos/OBJLoader.js"></script>
+    <script src="./OrbitControls.js"></script>
+    <script>
+    jQuery(function() {
+        var scene;
+        var controls;
+        var renderer;
+        var container = jQuery('#viewerContainer');
+        var models = [];
+
+        var fileInput = jQuery('#fileInput');
+        fileInput.on('change', function(event) {
+            var file = fileInput[0].files[0];
+            var filename = file.name;
+
+            var reader = new FileReader();
+            reader.addEventListener('progress', function(event) {
+                var size = '(' + Math.floor(event.total / 1000) + ' KB)';
+                var progress = Math.floor((event.loaded / event.total) * 100) + '%';
+                console.log('Loading', filename, size, progress);
+            });
+            reader.addEventListener('load', function(event) {
+                var contents = event.target.result;
+                var object = new THREE.OBJLoader().parse(contents);
+                object.name = filename;
+                scene.add(object);
+                models.push({ title: filename, selected: true, object: object });
+                renderList();
+            }, false);
+            reader.readAsText(file);
+        });
+
+        function renderList() {
+            var modelList = jQuery('#modelList');
+            modelList.children().remove();
+            models.map(function(model) {
+                var classes = 'list-group-item list-group-item-action';
+                if (model.selected) {
+                    classes += ' list-group-item-info';
+                }
+                var item = jQuery('<a class="' + classes + '">' + model.title + '</a>');
+                modelList.append(item);
+            })
+        }
+        jQuery('#modelList').on('click', 'a', function() {
+            // debugger;
+            var item = jQuery(this);
+            var index = jQuery('#modelList').children().index(jQuery(this));
+            var model = models[index];
+            model.selected = !model.selected;
+            model.object.visible = model.selected;
+            renderList();
+        });
+
+        function init() {
+            var width = container.innerWidth() - 40;
+            var height = container.innerHeight() - 40;
+            camera = new THREE.PerspectiveCamera(45, width / height, 1, 1000);
+            camera.position.z = 30;
+            scene = new THREE.Scene();
+            ambient = new THREE.AmbientLight(0xffffff, 1.0);
+            scene.add(ambient);
+
+            keyLight = new THREE.DirectionalLight(new THREE.Color('hsl(30, 100%, 75%)'), 1.0);
+            keyLight.position.set(-100, 0, 100);
+
+            fillLight = new THREE.DirectionalLight(new THREE.Color('hsl(240, 100%, 75%)'), 0.75);
+            fillLight.position.set(100, 0, 100);
+
+            backLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            backLight.position.set(100, 0, -100).normalize();
+
+            scene.add(keyLight);
+            scene.add(fillLight);
+            scene.add(backLight);
+
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(width, height);
+            renderer.setClearColor(new THREE.Color("hsl(0, 0%, 50%)"));
+
+            container[0].appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.25;
+            controls.enableZoom = false;
+
+            render();
+        }
+
+        function render() {
+            requestAnimationFrame(render);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        init();
+    });
+    </script>
+</body>
+
+</html>
