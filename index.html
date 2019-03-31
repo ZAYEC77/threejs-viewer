@@ -28,8 +28,22 @@
                                 <label class="custom-file-label" for="fileInput">Choose file</label>
                             </div>
                         </div>
-                        <div class="list-group" id="modelList">
+                        <div class="list-group mb-3" id="modelList">
                         </div>
+                        <hr>
+                        <form id="operationForm">
+                            <div class="input-group mb-3">
+                                <select class="custom-select" id="operationSelect">
+                                    <option value="">Select operation</option>
+                                    <option value="union">Union</option>
+                                    <option value="substract">Substract</option>
+                                    <option value="intersect">Intersect</option>
+                                </select>
+                                <div class="input-group-append">
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                     <div class="col-9">
                         <div class="card viewer-wrap">
@@ -88,7 +102,6 @@
             })
         }
         jQuery('#modelList').on('click', 'a', function() {
-            // debugger;
             var item = jQuery(this);
             var index = jQuery('#modelList').children().index(jQuery(this));
             var model = models[index];
@@ -96,6 +109,27 @@
             model.object.visible = model.selected;
             renderList();
         });
+
+        jQuery('#operationForm').on('submit', function(e) {
+            var operation = jQuery('#operationSelect').val();
+            var selectedModels = models.filter(function(model) { 
+                return model.selected; 
+            });
+            //@TODO implement ajax call
+            /* jQuery.ajax({
+                method: 'post',
+                data: {
+                    models: 
+                    operation: operation,
+                },
+                success: function() {
+    
+                }
+            })
+            */
+            e.preventDefault();
+            return false;
+        })
 
         function init() {
             var width = container.innerWidth() - 40;
